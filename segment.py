@@ -1,7 +1,5 @@
 from scipy.ndimage import sobel
-import nibabel as nib
 import numpy as np
-import os
 from skimage.filters import threshold_triangle
 from skimage.morphology import binary_dilation
 from image_lib import get_nii_array, get_large_labels, save_nii
@@ -39,6 +37,5 @@ parser.add_argument("--t", type=int, help="Threshold value. Determines how clear
                    "Default: Uses trianle algorith to find threshold.")
 
 args = parser.parse_args()
-print(args)
 
 segment(args.image_path, args.output_name, sobel_axis=args.s, threshold=args.t, min_density=args.min_density)
