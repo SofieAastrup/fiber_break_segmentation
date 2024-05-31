@@ -1,48 +1,14 @@
-"""
-Copyright (C) 2023 Abraham George Smith
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
-
-import time
-import copy
-
 import numpy as np
 import torch
-
-from patch_seg import handle_patch_update_in_epoch_step
-from model_utils import debug_memory
-from loss import get_batch_loss
-from viz import save_patches_image
 from unet3d import UNet3D #RootPainter3D UNet
 import nibabel as nib
 from matplotlib import pyplot as plt
 from patchify import patchify
 from torch.utils.data import Dataset, DataLoader
 import schedulefree
-from torchvision.transforms import v2
 
 class FiberData(Dataset):
     def __init__(self, inputs, labels, mode="train"):
-        # print(f"input sizes {inputs.shape=}, {labels.shape=}")
-        # inputs = patchify(inputs, (116, 116, 116), step=82)
-        # print(f"patchified {inputs.shape=}")
-        # labels = patchify(labels, (116, 116, 116), step=82)
-        # print(f"patchified {labels.shape=}")
-        # numd1, numd2, numd3, _,_,_ = inputs.shape
-        # inputs = inputs.reshape(numd1*numd2*numd3, 116, 116, 116)
-        # labels = labels.reshape(numd1*numd2*numd3, 116, 116, 116)
         inputs = (inputs - np.min(inputs))/(np.max(inputs)- np.min(inputs))
         # labels = (inputs - np.min(labels))/(np.max(labels)- np.min(labels))
         self.inputs = inputs
@@ -63,9 +29,6 @@ class FiberData(Dataset):
         x3_rand = np.random.randint(x3-116)
         input = self.inputs[x1_rand:x1_rand+116, x2_rand:x2_rand+116, x3_rand:x3_rand+116]
         label = self.labels[x1_rand:x1_rand+116, x2_rand:x2_rand+116, x3_rand:x3_rand+116]
-        # print(f"{np.max(self.inputs)=}, {np.max(self.labels)=}")
-        # print(f"{self.inputs.shape=}, {self.labels.shape=}")
-        # print(f"{input.shape=}, {label.shape=}")
         input = np.expand_dims(input, 0)
         input = torch.from_numpy(np.array(input)).cuda()
         label = label[17:-17,17:-17,17:-17]
@@ -76,7 +39,6 @@ class FiberData(Dataset):
 class FiberDataValidation(Dataset):
     def __init__(self, inputs, labels):
         inputs = (inputs - np.min(inputs))/(np.max(inputs)- np.min(inputs))
-        # labels = (inputs - np.min(labels))/(np.max(labels)- np.min(labels))
         print(f"input sizes {inputs.shape=}, {labels.shape=}")
         inputs = patchify(inputs, (116, 116, 116), step=82)
         print(f"patchified {inputs.shape=}")
@@ -87,14 +49,11 @@ class FiberDataValidation(Dataset):
         labels = labels.reshape(numd1*numd2*numd3, 116, 116, 116)
         self.inputs = inputs
         self.labels = labels
-        # print(f"{len(inputs)}")
-        # print(f"{inputs.shape}")
     def __len__(self):
         return len(self.labels)
     def __getitem__(self, idx):
         input = self.inputs[idx]
         label = self.labels[idx]
-        # print(f"{input.shape=}, {label.shape=}")
         input = np.expand_dims(input, 0)
         input = torch.from_numpy(np.array(input)).cuda()
         label = label[17:-17,17:-17,17:-17]
